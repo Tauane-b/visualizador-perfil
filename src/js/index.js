@@ -1,49 +1,37 @@
-const inputSearch = document.getElementById("input-search");
-const btnSearch = document.getElementById("btn-search");
-const profileResults = document.getElementById("profile-results");
+import { fetchUserProfile } from "./api.js";
+import { validateUserInput } from "./validation.js";
+import { generateProfileTemplate } from "./templates.js";
+import {
+  getSearchElements,
+  displayLoading,
+  displayProfile,
+  clearProfile,
+  showError,
+} from "./dom.js";
 
-const BASE_URL = "https://api.github.com";
+// Inicializar elementos do DOM
+const { inputSearch, btnSearch, profileResults } = getSearchElements();
 
+// Event Listener para buscar perfil
 btnSearch.addEventListener("click", async () => {
-  const userName = inputSearch.value;
-  if (userName) {
-    profileResults.innerHTML = "<p class='loading'>Carregando...</p>";
-    try {
-      const response = await fetch(`${BASE_URL}/users/${userName}`);
+  try {
+    // Validar entrada do usuário
+    const userName = inputSearch.value;
+    validateUserInput(userName);
 
-      if (!response.ok) {
-        alert(
-          "Usuário não encontrado. por favor, verifique o nome de usuário e tente novamente."
-        );
-        profileResults.innerHTML= "";
-        return;
-      }
+    // Exibir carregamento
+    displayLoading(profileResults);
 
-      const userData = await response.json();
-      console.log(userData);
+    // Buscar dados do usuário
+    const userData = await fetchUserProfile(userName);
 
-      profileResults.innerHTML = `
-        <div class="profile-card">
-          <img src="${userData.avatar_url}" alt="Avatar de ${userData.name}" class="profile-avatar" />
-          <div class ="profile-info">
-          <h2>${userData.name}</h2>
-          <p>${userData.bio || 'Não possui bio cadastrada😭'}</p>
-          <p>Repositórios públicos: ${userData.public_repos}</p>
-          <p>Seguidores: ${userData.followers}</p>
-          <p>Seguindo: ${userData.following}</p>
-        </div>
-        </div>
-      `;
+    // Gerar e exibir template do perfil
+    const profileTemplate = generateProfileTemplate(userData);
+    displayProfile(profileResults, profileTemplate);
 
-    } catch (error) {
-      alert(
-        "Ocorreu um erro ao buscar o usuário. Por favor, tente novamente mais tarde."
-      );
-    }
-  } else {
-    alert("Por favor,digite um nome de usúario do GitHub");
+  } catch (error) {
+    showError(error.message);
+    clearProfile(profileResults);
   }
-
-  // O valor do input está na variável searchTerm.
-  // Você pode usar essa variável para fazer o que precisa
 });
+
