@@ -5,7 +5,7 @@ const inputSearch = document.getElementById("input-search");
 const btnSearch = document.getElementById("btn-search");
 const profileResults = document.getElementById("profile-results");
 
-btnSearch.addEventListener("click", async () => {
+async function getUserProfile() {
   const userName = inputSearch.value.trim();
 
   if (!userName) {
@@ -19,17 +19,20 @@ btnSearch.addEventListener("click", async () => {
   try {
     const userData = await fetchGithubUser(userName);
     const userRepos = await fetchGithubRepos(userName);
-    console.log(userRepos);
 
     renderProfile(userData, userRepos, profileResults);
 
   } catch (error) {
     console.error("Erro ao buscar o perfil do usuário:", error);
+    alert("Erro ao buscar o perfil do usuário. Verifique o nome e tente novamente.");
+    profileResults.innerHTML = "";
+  }
+}
 
-    profileResults.innerHTML = `
-      <p class="error">
-        Usuário não encontrado. Verifique o nome e tente novamente.
-      </p>
-    `;
+btnSearch.addEventListener("click", getUserProfile);
+
+inputSearch.addEventListener("keyup", (event) => {
+  if (event.key === "Enter") {
+    getUserProfile();
   }
 });
