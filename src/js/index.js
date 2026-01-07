@@ -1,37 +1,35 @@
-import { fetchUserProfile } from "./api.js";
-import { validateUserInput } from "./validation.js";
-import { generateProfileTemplate } from "./templates.js";
-import {
-  getSearchElements,
-  displayLoading,
-  displayProfile,
-  clearProfile,
-  showError,
-} from "./dom.js";
+import { fetchGithubUser, fetchGithubRepos } from "./githubApi.js";
+import { renderProfile } from "./profileview.js";
 
-// Inicializar elementos do DOM
-const { inputSearch, btnSearch, profileResults } = getSearchElements();
+const inputSearch = document.getElementById("input-search");
+const btnSearch = document.getElementById("btn-search");
+const profileResults = document.getElementById("profile-results");
 
-// Event Listener para buscar perfil
 btnSearch.addEventListener("click", async () => {
+  const userName = inputSearch.value.trim();
+
+  if (!userName) {
+    alert("Por favor, digite um nome de usuário do GitHub");
+    profileResults.innerHTML = "";
+    return;
+  }
+
+  profileResults.innerHTML = "<p class='loading'>Carregando...</p>";
+
   try {
-    // Validar entrada do usuário
-    const userName = inputSearch.value;
-    validateUserInput(userName);
+    const userData = await fetchGithubUser(userName);
+    const userRepos = await fetchGithubRepos(userName);
+    console.log(userRepos);
 
-    // Exibir carregamento
-    displayLoading(profileResults);
-
-    // Buscar dados do usuário
-    const userData = await fetchUserProfile(userName);
-
-    // Gerar e exibir template do perfil
-    const profileTemplate = generateProfileTemplate(userData);
-    displayProfile(profileResults, profileTemplate);
+    renderProfile(userData, userRepos, profileResults);
 
   } catch (error) {
-    showError(error.message);
-    clearProfile(profileResults);
+    console.error("Erro ao buscar o perfil do usuário:", error);
+
+    profileResults.innerHTML = `
+      <p class="error">
+        Usuário não encontrado. Verifique o nome e tente novamente.
+      </p>
+    `;
   }
 });
-
